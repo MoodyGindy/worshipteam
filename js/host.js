@@ -1,12 +1,12 @@
 const API_URL = 'https://kdsc.fun/worshipteam/worshipteam/api';
-const WS_URL = 'wss://kdsc.fun:8080'; // Use WSS (secure WebSocket) for HTTPS sites
 
-let ws = null;
 let gameCode = null;
 let questions = [];
 let currentQuestionIndex = 0;
 let timerInterval = null;
 let currentQuestion = null;
+let pollingInterval = null;
+let lastUpdateTime = 0;
 
 // Initialize the game
 async function init() {
@@ -38,8 +38,8 @@ async function init() {
         // Load questions
         await loadQuestions();
 
-        // Connect to WebSocket
-        connectWebSocket();
+        // Start polling for updates
+        startPolling();
 
         // Setup event listeners
         document.getElementById('startButton').addEventListener('click', startGame);
@@ -60,86 +60,47 @@ async function loadQuestions() {
         questions = data.questions;
         document.getElementById('totalQuestions').textContent = questions.length;
         
-        // Verify questions have correct_answer
         console.log('Loaded questions:', questions.length);
-        if (questions.length > 0) {
-            console.log('Sample question:', {
-                id: questions[0].id,
-                has_correct_answer: 'correct_answer' in questions[0],
-                correct_answer: questions[0].correct_answer
-            });
-        }
     } catch (error) {
         console.error('Error loading questions:', error);
     }
 }
 
-function connectWebSocket() {
-    ws = new WebSocket(WS_URL);
-
-    ws.onopen = () => {
-        console.log('Connected to WebSocket server');
-        
-        // Register as host with the server
-        ws.send(JSON.stringify({
-            type: 'register_host',
-            gameCode: gameCode
-        }));
-        
-        ws.isHost = true;
-        ws.gameCode = gameCode;
-    };
-
-    ws.onmessage = (event) => {
+function startPolling() {
+    // Poll every 2 seconds for game updates (player count, new answers)
+    pollingInterval = setInterval(async () => {
         try {
-            const message = JSON.parse(event.data);
-            console.log('Received message:', message);
-            handleWebSocketMessage(message);
+            const response = await fetch(`${API_URL}/get-game-updates?code=${gameCode}&lastCheck=${lastUpdateTime}`);
+            const data = await response.json();
+
+            if (data.success) {
+                // Update player count
+                updatePlayerCount(data.totalPlayers);
+
+                // If new answers submitted, update leaderboard
+                if (data.newAnswers > 0) {
+                    updateLeaderboard();
+                }
+
+                lastUpdateTime = data.lastUpdate;
+            }
         } catch (error) {
-            console.error('Error parsing message:', error, event.data);
+            console.error('Error polling for updates:', error);
         }
-    };
+    }, 2000); // Poll every 2 seconds
 
-    ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
-    };
-
-    ws.onclose = () => {
-        console.log('WebSocket connection closed');
-        setTimeout(connectWebSocket, 3000);
-    };
-}
-
-function handleWebSocketMessage(message) {
-    console.log('Handling message type:', message.type);
-    switch (message.type) {
-        case 'player_joined':
-            console.log('Player joined:', message.playerName, 'Total:', message.totalPlayers);
-            updatePlayerCount(message.totalPlayers);
-            break;
-        case 'answer_submitted':
-            console.log('Answer submitted, updating leaderboard');
-            updateLeaderboard();
-            break;
-        case 'question_broadcast':
-            // Question was broadcast to players
-            console.log('Question broadcasted to players');
-            break;
-        default:
-            console.log('Unknown message type:', message.type);
-    }
+    // Initial update
+    updatePlayerCount(0);
 }
 
 function updatePlayerCount(count) {
     document.getElementById('playersCount').textContent = count;
 }
 
-function startGame() {
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        ws.send(JSON.stringify({
-            type: 'start_game',
-            gameCode: gameCode
-        }));
+async function startGame() {
+    try {
+        // Update game status to 'playing'
+        await fetch(`${API_URL}/get-game?code=${gameCode}`);
 
         // Hide lobby, show question screen
         document.getElementById('lobbyScreen').classList.add('hidden');
@@ -148,10 +109,13 @@ function startGame() {
 
         // Show first question
         nextQuestion();
+    } catch (error) {
+        console.error('Error starting game:', error);
+        alert('خطأ في بدء اللعبة');
     }
 }
 
-function nextQuestion() {
+async function nextQuestion() {
     if (currentQuestionIndex >= questions.length) {
         showWinners();
         return;
@@ -162,26 +126,33 @@ function nextQuestion() {
 
     console.log(`=== Moving to Question ${currentQuestionIndex} ===`);
     console.log('Question ID:', currentQuestion.id);
-    console.log('WebSocket state:', ws ? ws.readyState : 'null', '(OPEN=1)');
 
-    // IMPORTANT: Send question to server FIRST before updating UI
-    // This ensures players receive the question as quickly as possible
-    if (ws && ws.readyState === WebSocket.OPEN) {
-        const message = {
-            type: 'next_question',
-            gameCode: gameCode,
-            questionNumber: currentQuestionIndex,
-            questionId: currentQuestion.id
-        };
-        console.log('Sending to server:', message);
-        ws.send(JSON.stringify(message));
-    } else {
-        console.error('WebSocket not ready! State:', ws ? ws.readyState : 'null');
-        alert('WebSocket connection lost! Please refresh the page.');
+    // Set current question in database (this makes it available to players)
+    try {
+        const response = await fetch(`${API_URL}/set-current-question`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                gameCode: gameCode,
+                questionId: currentQuestion.id,
+                questionNumber: currentQuestionIndex
+            })
+        });
+
+        const data = await response.json();
+        if (!data.success) {
+            console.error('Failed to set current question');
+            return;
+        }
+    } catch (error) {
+        console.error('Error setting current question:', error);
+        alert('خطأ في إرسال السؤال');
         return;
     }
 
-    // Then update host UI
+    // Update host UI
     document.getElementById('currentQuestion').textContent = currentQuestionIndex;
     document.getElementById('category').textContent = getCategoryName(currentQuestion.category);
     document.getElementById('questionText').textContent = currentQuestion.question_text;
@@ -239,7 +210,7 @@ function showCorrectAnswer() {
         return;
     }
 
-    // Normalize correct answer (convert to uppercase, trim whitespace)
+    // Normalize correct answer
     let correctAnswer = String(currentQuestion.correct_answer || '').trim().toUpperCase();
     
     console.log('Showing correct answer. Question:', currentQuestion.id, 'Correct Answer:', correctAnswer);
@@ -264,7 +235,7 @@ function showCorrectAnswer() {
         }
     });
 
-    // Highlight correct answer (check if element exists)
+    // Highlight correct answer
     const correctElement = document.getElementById(optionMap[correctAnswer]);
     if (correctElement) {
         correctElement.classList.add('correct');
@@ -329,13 +300,21 @@ async function updateLeaderboard() {
 
 async function showWinners() {
     try {
-        // Send game ended message
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
-                type: 'end_game',
-                gameCode: gameCode
-            }));
-        }
+        // Clear current question
+        await fetch(`${API_URL}/set-current-question`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                gameCode: gameCode,
+                questionId: null,
+                questionNumber: 0
+            })
+        });
+
+        // Update game status to finished
+        // (You may want to add an API endpoint for this)
 
         // Get final leaderboard
         const response = await fetch(`${API_URL}/get-leaderboard?code=${gameCode}`);
@@ -346,6 +325,11 @@ async function showWinners() {
         document.getElementById('questionScreen').classList.add('hidden');
         document.getElementById('winnersScreen').classList.remove('hidden');
         document.getElementById('winnersScreen').classList.add('show-flex');
+
+        // Stop polling
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
 
         // Display winners
         if (winners[0]) {
