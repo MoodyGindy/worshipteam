@@ -26,16 +26,16 @@ mysql -u your_username -p worshipteam < ../database/admin_migration.sql
 
 ⚠️ **Important:** Change the password after first login!
 
-### Step 3: Forgot Password Feature
-- Click "نسيت كلمة المرور؟" on the login page
-- Enter your email: `moody.gindy@gmail.com`
-- Check your email for the reset link
-- Reset link is valid for 1 hour
-
 ### Step 3: Access Admin Panel
 1. Open: `http://localhost:8888/worshipTeam/admin/login.html`
 2. Login with credentials above
 3. You'll be redirected to the dashboard
+
+### Step 4: Forgot Password Feature
+- Click "نسيت كلمة المرور؟" on the login page
+- Enter your email: `moody.gindy@gmail.com`
+- Check your email for the reset link
+- Reset link is valid for 1 hour
 
 ---
 
@@ -99,6 +99,8 @@ echo password_hash('your_password', PASSWORD_DEFAULT);
 - `POST /api/admin-login` - Login
 - `POST /api/admin-logout` - Logout
 - `GET /api/admin-check` - Check authentication status
+- `POST /api/admin-forgot-password` - Request password reset (sends email)
+- `POST /api/admin-reset-password` - Reset password with token
 
 ### Questions
 - `GET /api/admin-questions` - List all questions (with filters)
@@ -106,7 +108,7 @@ echo password_hash('your_password', PASSWORD_DEFAULT);
 - `PUT /api/admin-questions` - Update question
 - `DELETE /api/admin-questions?id={id}` - Delete question
 
-All admin endpoints require authentication via session.
+All admin endpoints require authentication via session (except login and password reset).
 
 ---
 
@@ -128,6 +130,19 @@ admin/
 - Verify default admin user exists in database
 - Check browser console for errors
 - Make sure session is working (check PHP session settings)
+- Use "Forgot Password" feature if you forgot your password
+
+**Forgot Password:**
+- Make sure your email is set correctly in database (`moody.gindy@gmail.com`)
+- Check spam/junk folder for reset email
+- Reset link expires after 1 hour - request a new one if expired
+- Verify PHP `mail()` function is configured on your server
+
+**Email not sending:**
+- Check PHP mail configuration (`php.ini`)
+- For production, consider using SMTP (see Email Configuration below)
+- Check server error logs for email sending errors
+- On localhost, emails might not send - use SMTP for testing
 
 **401 Unauthorized:**
 - Session might have expired - try logging in again
@@ -138,6 +153,18 @@ admin/
 - Check database connection
 - Verify questions table exists
 - Check browser console for API errors
+
+## Email Configuration
+
+The forgot password feature uses PHP's `mail()` function by default. For production servers, you may want to use SMTP.
+
+### Using SMTP (Optional)
+
+To use SMTP instead of PHP's mail(), you'll need to:
+1. Install PHPMailer: `composer require phpmailer/phpmailer`
+2. Update `sendPasswordResetEmail()` function in `api/index.php` to use PHPMailer
+
+For now, the default `mail()` function works on most servers.
 
 ---
 
