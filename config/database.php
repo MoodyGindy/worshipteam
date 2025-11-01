@@ -4,9 +4,9 @@
 return [
     'host' => 'localhost',
     'port' => 8889, // MAMP default MySQL port
-    'database' => 'team',
-    'username' => 'team',
-    'password' => 'team', // Default MAMP password
+    'database' => 'u986938982_worldwar3_game',
+    'username' => 'u986938982_worldwar3_game',
+    'password' => 'Warldwar3_game@1234', // Default MAMP password
     'charset' => 'utf8mb4',
     'options' => [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
