@@ -516,33 +516,93 @@
     </div>
 
     <script>
-        const API_URL = 'https://kdsc.fun/worshipTeam/api';
+        // Auto-detect API URL from current page location
+        function getApiUrl() {
+            const currentPath = window.location.pathname;
+            const baseMatch = currentPath.match(/^\/([^\/]+)/);
+            const base = baseMatch ? baseMatch[1] : 'worshipTeam';
+            return `https://${window.location.host}/${base}/api`;
+        }
+        
+        const API_URL = getApiUrl();
         let currentEditId = null;
+        let authCheckInProgress = false; // Prevent multiple simultaneous checks
 
         // Check authentication on load
         window.addEventListener('DOMContentLoaded', () => {
-            checkAuth();
+            // Only check auth once
+            if (!sessionStorage.getItem('authChecked')) {
+                checkAuth();
+            } else {
+                // Already checked, just load questions
+                loadQuestions();
+            }
         });
 
         async function checkAuth() {
+            // Prevent infinite loop
+            if (authCheckInProgress) {
+                console.log('Auth check already in progress, skipping...');
+                return;
+            }
+            
+            authCheckInProgress = true;
+            
             try {
-                const response = await fetch(`${API_URL}/admin-check`, {
-                    method: 'GET',
-                    credentials: 'include' // Important for sending cookies
-                });
-
-                const data = await response.json();
-
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                    return;
+                // Try multiple endpoints
+                const endpoints = [
+                    `${API_URL}/admin-check`,
+                    `https://${window.location.host}/worshipTeam/api/admin-check`,
+                    `https://${window.location.host}/worshipteam/api/admin-check`
+                ];
+                
+                let response;
+                let authData;
+                
+                for (const endpoint of endpoints) {
+                    try {
+                        console.log('Trying auth endpoint:', endpoint);
+                        response = await fetch(endpoint, {
+                            method: 'GET',
+                            credentials: 'include'
+                        });
+                        
+                        if (response.ok) {
+                            authData = await response.json();
+                            console.log('Auth response:', authData);
+                            
+                            if (authData.authenticated) {
+                                // Mark as checked to prevent re-checking
+                                sessionStorage.setItem('authChecked', 'true');
+                                document.getElementById('adminUsername').textContent = authData.username || 'المشرف';
+                                loadQuestions();
+                                authCheckInProgress = false;
+                                return;
+                            }
+                        }
+                    } catch (err) {
+                        console.warn('Endpoint failed:', endpoint, err);
+                        continue;
+                    }
                 }
-
-                document.getElementById('adminUsername').textContent = data.username || 'المشرف';
-                loadQuestions();
+                
+                // If we get here, authentication failed
+                console.error('Authentication failed - clearing tokens and redirecting');
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUsername');
+                sessionStorage.removeItem('authChecked');
+                
+                // Use replace to prevent back button from causing loop
+                window.location.replace('login.html');
+                
             } catch (error) {
                 console.error('Auth check error:', error);
-                window.location.href = 'login.html';
+                localStorage.removeItem('adminToken');
+                localStorage.removeItem('adminUsername');
+                sessionStorage.removeItem('authChecked');
+                window.location.replace('login.html');
+            } finally {
+                authCheckInProgress = false;
             }
         }
 
@@ -554,25 +614,53 @@
             const category = document.getElementById('categoryFilter').value;
 
             try {
-                const url = `${API_URL}/admin-questions?${category !== 'all' ? 'category=' + category : ''}${search ? '&search=' + encodeURIComponent(search) : ''}`;
-                const response = await fetch(url, {
-                    credentials: 'include'
-                });
-
-                const data = await response.json();
+                // Try multiple endpoints
+                const endpoints = [
+                    `${API_URL}/admin-questions?${category !== 'all' ? 'category=' + category : ''}${search ? '&search=' + encodeURIComponent(search) : ''}`,
+                    `https://${window.location.host}/worshipTeam/api/admin-questions?${category !== 'all' ? 'category=' + category : ''}${search ? '&search=' + encodeURIComponent(search) : ''}`,
+                    `https://${window.location.host}/worshipteam/api/admin-questions?${category !== 'all' ? 'category=' + category : ''}${search ? '&search=' + encodeURIComponent(search) : ''}`
+                ];
+                
+                let response;
+                let data;
+                
+                for (const url of endpoints) {
+                    try {
+                        console.log('Trying questions endpoint:', url);
+                        response = await fetch(url, {
+                            credentials: 'include'
+                        });
+                        
+                        if (response.ok) {
+                            data = await response.json();
+                            break;
+                        } else if (response.status === 404) {
+                            continue; // Try next endpoint
+                        }
+                    } catch (err) {
+                        console.warn('Endpoint failed:', url, err);
+                        continue;
+                    }
+                }
+                
+                if (!response || !data) {
+                    throw new Error('لا يمكن الوصول إلى الخادم');
+                }
 
                 if (!data.success) {
                     if (response.status === 401) {
-                        window.location.href = 'login.html';
+                        localStorage.removeItem('adminToken');
+                        sessionStorage.removeItem('authChecked');
+                        window.location.replace('login.html');
                         return;
                     }
                     throw new Error(data.error || 'خطأ في تحميل الأسئلة');
                 }
 
-                displayQuestions(data.questions);
+                displayQuestions(data.questions || []);
             } catch (error) {
                 console.error('Error loading questions:', error);
-                container.innerHTML = `<div class="empty-state">❌ خطأ في تحميل الأسئلة: ${error.message}</div>`;
+                container.innerHTML = `<div class="empty-state">❌ خطأ في تحميل الأسئلة: ${error.message}<br><small>تحقق من Console للمزيد من التفاصيل</small></div>`;
             }
         }
 

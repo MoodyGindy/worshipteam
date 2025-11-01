@@ -297,10 +297,37 @@
             errorMessage.classList.add('show');
         }
 
-        // Check if already logged in
-        if (localStorage.getItem('adminToken')) {
-            window.location.href = 'dashboard.html';
+        // Check if already logged in - but verify first to prevent loop
+        async function checkExistingAuth() {
+            const token = localStorage.getItem('adminToken');
+            if (!token) return;
+            
+            try {
+                // Quick check without redirect loop
+                const checkUrl = `${API_URL}/admin-check`;
+                const response = await fetch(checkUrl, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.authenticated) {
+                        window.location.href = 'dashboard.html';
+                    } else {
+                        // Clear invalid token
+                        localStorage.removeItem('adminToken');
+                    }
+                }
+            } catch (error) {
+                // Don't redirect on error, just clear token
+                console.warn('Auth check failed:', error);
+                localStorage.removeItem('adminToken');
+            }
         }
+        
+        // Don't auto-redirect, let user see login page even if token exists
+        // checkExistingAuth();
     </script>
 </body>
 </html>
