@@ -3,7 +3,7 @@
  * Admin Password Reset Tool
  * 
  * This script allows you to reset the admin password directly
- * Run this file in your browser: http://localhost:8888/worshipTeam/admin/reset_admin_password.php
+ * Run this file in your browser: https://kdsc.fun/worshipTeam/admin/reset_admin_password.php
  * 
  * SECURITY: Delete this file after use in production!
  */

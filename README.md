@@ -40,7 +40,7 @@ composer install
 ### الخطوة 2: إعداد قاعدة البيانات
 
 1. افتح MAMP وشغل Apache و MySQL
-2. افتح phpMyAdmin: http://localhost:8888/phpMyAdmin
+2. افتح phpMyAdmin: https://kdsc.fun/phpMyAdmin
 3. قم باستيراد ملفات قاعدة البيانات:
 
 ```bash
@@ -88,14 +88,14 @@ WebSocket server started on port 8080
 1. **عرض المضيف (الشاشة الكبيرة):**
    افتح في المتصفح:
    ```
-   http://localhost:8888/worshipteam/host.html
+   https://kdsc.fun/worshipteam/host.html
    ```
 
 2. **عرض اللاعب (الموبايل):**
    امسح رمز QR الذي يظهر على الشاشة الكبيرة
    أو افتح:
    ```
-   http://localhost:8888/worshipteam/player.html?code=XXXXX
+   https://kdsc.fun/worshipteam/player.html?code=XXXXX
    ```
 
 ## 🎮 كيفية اللعب

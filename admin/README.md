@@ -27,7 +27,7 @@ mysql -u your_username -p worshipteam < ../database/admin_migration.sql
 ⚠️ **Important:** Change the password after first login!
 
 ### Step 3: Access Admin Panel
-1. Open: `http://localhost:8888/worshipTeam/admin/login.html`
+1. Open: `https://kdsc.fun/worshipTeam/admin/login.html`
 2. Login with credentials above
 3. You'll be redirected to the dashboard
 

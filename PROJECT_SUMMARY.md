@@ -250,7 +250,7 @@ Open `check.php` in browser to verify setup
 
 ### Local Testing
 - Use `localhost` in configuration
-- Access via `http://localhost:8888/worshipteam/`
+- Access via `https://kdsc.fun/worshipteam/`
 
 ### Local Network (Multiple Devices)
 1. Find your IP address

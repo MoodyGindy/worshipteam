@@ -6,7 +6,7 @@
 
 1. افتح المتصفح واذهب إلى:
    ```
-   http://localhost:8888/worshipTeam/admin/reset_admin_password.php
+   https://kdsc.fun/worshipTeam/admin/reset_admin_password.php
    ```
 
 2. أدخل:
@@ -23,7 +23,7 @@
 
 1. افتح:
    ```
-   http://localhost:8888/worshipTeam/admin/generate_password_hash.php
+   https://kdsc.fun/worshipTeam/admin/generate_password_hash.php
    ```
 
 2. أدخل كلمة المرور المطلوبة
@@ -97,7 +97,7 @@ WHERE username = 'admin';
 
 ## التحقق من أن كلمة المرور تعمل:
 
-1. اذهب إلى: `http://localhost:8888/worshipTeam/admin/login.html`
+1. اذهب إلى: `https://kdsc.fun/worshipTeam/admin/login.html`
 
 2. سجل الدخول بالبيانات الجديدة
 

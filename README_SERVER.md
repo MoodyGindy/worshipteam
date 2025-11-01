@@ -2,7 +2,7 @@
 
 ## ❌ DO NOT Access server.php via Browser!
 
-**WRONG:** `http://localhost:8888/worshipteam/server.php` ❌  
+**WRONG:** `https://kdsc.fun/worshipteam/server.php` ❌  
 This will cause a "500 Internal Server Error" because `server.php` is NOT a web page!
 
 ## ✅ CORRECT: Run from Terminal
@@ -44,17 +44,17 @@ The server must keep running. Don't close the terminal window.
 
 ## What Files to Access in Browser:
 
-✅ **Host View:** `http://localhost:8888/worshipteam/host.html`  
-✅ **Player View:** `http://localhost:8888/worshipteam/player.html?code=XXXXX`
+✅ **Host View:** `https://kdsc.fun/worshipteam/host.html`  
+✅ **Player View:** `https://kdsc.fun/worshipteam/player.html?code=XXXXX`
 
-❌ **NOT:** `http://localhost:8888/worshipteam/server.php`
+❌ **NOT:** `https://kdsc.fun/worshipteam/server.php`
 
 ---
 
 ## Quick Test:
 
 1. Start server in Terminal: `php server.php`
-2. Open browser: `http://localhost:8888/worshipteam/host.html`
+2. Open browser: `https://kdsc.fun/worshipteam/host.html`
 3. Check browser console (F12) for WebSocket connection
 
 ---

@@ -82,7 +82,7 @@
    ```
 
 2. **Test the connection:**
-   - Open your browser to: `http://localhost:8888/worshipteam/host.html`
+   - Open your browser to: `https://kdsc.fun/worshipteam/host.html`
    - Open browser Developer Tools (F12 or Cmd+Option+I)
    - Go to Console tab
    - If you see "Connected to WebSocket server" → ✅ Success!
@@ -264,7 +264,7 @@ ps aux | grep server.php
 Once the WebSocket server is running:
 
 1. ✅ Keep the terminal open
-2. ✅ Open `http://localhost:8888/worshipteam/host.html` in your browser
+2. ✅ Open `https://kdsc.fun/worshipteam/host.html` in your browser
 3. ✅ The game should initialize without errors
 4. ✅ Players can join via QR code
 

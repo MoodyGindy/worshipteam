@@ -3,7 +3,7 @@
  * Create/Update Admin User
  * 
  * This script ensures the admin user is created with correct password hash
- * Run: http://localhost:8888/worshipTeam/admin/create_admin.php
+ * Run: https://kdsc.fun/worshipTeam/admin/create_admin.php
  * 
  * SECURITY: Delete this file after use!
  */

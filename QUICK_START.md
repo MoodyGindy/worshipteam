@@ -18,7 +18,7 @@ Option A - Using Terminal:
 ```
 
 Option B - Using phpMyAdmin:
-1. Go to http://localhost:8888/phpMyAdmin
+1. Go to https://kdsc.fun/phpMyAdmin
 2. Import `database/schema.sql`
 3. Import `database/sample_questions.sql`
 
@@ -36,13 +36,13 @@ php server.php
 
 **Host View (Big Screen):**
 ```
-http://localhost:8888/worshipteam/host.html
+https://kdsc.fun/worshipteam/host.html
 ```
 
 **Player View (Mobile):**
 Scan the QR code shown on the host screen, or go to:
 ```
-http://localhost:8888/worshipteam/player.html?code=GAMECODE
+https://kdsc.fun/worshipteam/player.html?code=GAMECODE
 ```
 
 ## 5. Play!

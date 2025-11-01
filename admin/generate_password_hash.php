@@ -3,7 +3,7 @@
  * Password Hash Generator
  * 
  * Use this script to generate password hashes
- * Run: http://localhost:8888/worshipTeam/admin/generate_password_hash.php
+ * Run: https://kdsc.fun/worshipTeam/admin/generate_password_hash.php
  */
 
 $password = $_GET['password'] ?? $_POST['password'] ?? 'admin123';

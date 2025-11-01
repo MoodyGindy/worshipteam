@@ -3,7 +3,7 @@
  * Admin Setup Test Script
  * 
  * Run this to check if admin setup is correct
- * http://localhost:8888/worshipTeam/admin/test_admin_setup.php
+ * https://kdsc.fun/worshipTeam/admin/test_admin_setup.php
  */
 
 require_once __DIR__ . '/../vendor/autoload.php';

@@ -3,7 +3,7 @@
  * Database Connection Test
  * 
  * Test database connection and show detailed information
- * http://localhost:8888/worshipTeam/test_db_connection.php
+ * https://kdsc.fun/worshipTeam/test_db_connection.php
  */
 
 require_once __DIR__ . '/vendor/autoload.php';
