@@ -139,6 +139,13 @@ try {
             }
             break;
 
+        case 'admin-change-password':
+            if ($method === 'POST') {
+                requireAdminAuth();
+                changePassword($db);
+            }
+            break;
+
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Endpoint not found']);
@@ -1032,4 +1039,63 @@ function sendPasswordResetEmail($email, $username, $resetLink) {
     }
     
     return $result;
+}
+
+function changePassword($db) {
+    $input = json_decode(file_get_contents('php://input'), true);
+    $currentPassword = $input['current_password'] ?? '';
+    $newPassword = $input['new_password'] ?? '';
+
+    if (!$currentPassword || !$newPassword) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'كلمة المرور الحالية والجديدة مطلوبتان']);
+        return;
+    }
+
+    if (strlen($newPassword) < 6) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل']);
+        return;
+    }
+
+    // Get current admin
+    $adminId = $_SESSION['admin_id'] ?? null;
+    if (!$adminId) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'error' => 'غير مصرح']);
+        return;
+    }
+
+    // Get admin's current password hash
+    $admin = $db->fetchOne(
+        "SELECT password_hash FROM admins WHERE id = ?",
+        [$adminId]
+    );
+
+    if (!$admin) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'المستخدم غير موجود']);
+        return;
+    }
+
+    // Verify current password
+    if (!password_verify($currentPassword, $admin['password_hash'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'كلمة المرور الحالية غير صحيحة']);
+        return;
+    }
+
+    // Hash new password
+    $newPasswordHash = password_hash($newPassword, PASSWORD_DEFAULT);
+
+    // Update password
+    $db->query(
+        "UPDATE admins SET password_hash = ? WHERE id = ?",
+        [$newPasswordHash, $adminId]
+    );
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'تم تغيير كلمة المرور بنجاح'
+    ]);
 }
