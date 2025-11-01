@@ -1,0 +1,15 @@
+{
+    "name": "worship-team/quiz-game",
+    "description": "Real-time multiplayer quiz game",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "cboden/ratchet": "^0.4",
+        "phpqrcode/phpqrcode": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "QuizGame\\": "src/"
+        }
+    }
+}

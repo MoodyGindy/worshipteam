@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>لعبة الأسئلة - اللاعب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 900;
+        }
+
+        .join-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .join-box {
+            background: rgba(255,255,255,0.15);
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+
+        .join-box h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .input-group input {
+            font-family: 'Cairo', sans-serif;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            text-align: right;
+        }
+
+        .join-button {
+            font-family: 'Cairo', sans-serif;
+            width: 100%;
+            padding: 15px;
+            background: #48bb78;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .join-button:active {
+            transform: scale(0.95);
+        }
+
+        .waiting-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+        }
+
+        .waiting-screen h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .loader {
+            border: 5px solid rgba(255,255,255,0.3);
+            border-top: 5px solid white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .question-screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .question-info {
+            background: rgba(255,255,255,0.15);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .question-number {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+
+        .timer-bar-container {
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .timer-bar {
+            height: 100%;
+            background: #48bb78;
+            transition: width 1s linear;
+        }
+
+        .timer-bar.warning {
+            background: #fc8181;
+        }
+
+        .options-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-button {
+            font-family: 'Cairo', sans-serif;
+            background: rgba(255,255,255,0.2);
+            border: 3px solid transparent;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .option-button:active {
+            transform: scale(0.95);
+        }
+
+        .option-button.selected {
+            background: #4299e1;
+            border-color: white;
+        }
+
+        .option-button.correct {
+            background: #48bb78;
+            border-color: white;
+        }
+
+        .option-button.wrong {
+            background: #fc8181;
+            border-color: white;
+        }
+
+        .option-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .submit-button {
+            font-family: 'Cairo', sans-serif;
+            width: 100%;
+            padding: 15px;
+            background: #f6ad55;
+            border: none;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .submit-button:disabled {
+            background: rgba(255,255,255,0.2);
+            cursor: not-allowed;
+        }
+
+        .submit-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .result-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 6rem;
+            margin-bottom: 20px;
+        }
+
+        .result-message {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+        }
+
+        .points-earned {
+            font-size: 3rem;
+            font-weight: 900;
+            background: rgba(255,255,255,0.2);
+            padding: 20px 40px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .total-score {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .rank {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .winners-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            padding-top: 20px;
+        }
+
+        .final-result {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .final-result h2 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .final-score {
+            font-size: 4rem;
+            font-weight: 900;
+            background: rgba(255,255,255,0.2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .final-rank {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .podium-mini {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .podium-mini h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .winner-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .winner-item:nth-child(2) {
+            background: gold;
+            color: #333;
+        }
+
+        .winner-item:nth-child(3) {
+            background: silver;
+            color: #333;
+        }
+
+        .winner-item:nth-child(4) {
+            background: #cd7f32;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .show-flex {
+            display: flex !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 لعبة الأسئلة 🎵</h1>
+        </div>
+
+        <!-- Join Screen -->
+        <div id="joinScreen" class="join-screen">
+            <div class="join-box">
+                <h2>انضم إلى اللعبة</h2>
+                <div class="input-group">
+                    <label>رمز اللعبة</label>
+                    <input type="text" id="gameCodeInput" placeholder="أدخل رمز اللعبة" readonly>
+                </div>
+                <div class="input-group">
+                    <label>اسمك</label>
+                    <input type="text" id="playerNameInput" placeholder="أدخل اسمك" maxlength="20">
+                </div>
+                <button class="join-button" id="joinButton">انضم</button>
+            </div>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div id="waitingScreen" class="waiting-screen">
+            <h2>في انتظار بدء اللعبة...</h2>
+            <div class="loader"></div>
+            <p style="margin-top: 20px; font-size: 1.2rem;">سيبدأ المضيف اللعبة قريباً</p>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="questionScreen" class="question-screen">
+            <div class="question-info">
+                <div class="question-number">
+                    السؤال <span id="currentQuestion">1</span> من <span id="totalQuestions">20</span>
+                </div>
+                <div class="timer-bar-container">
+                    <div class="timer-bar" id="timerBar" style="width: 100%;"></div>
+                </div>
+            </div>
+
+            <div class="options-container">
+                <button class="option-button" id="optionA" data-answer="A"></button>
+                <button class="option-button" id="optionB" data-answer="B"></button>
+                <button class="option-button" id="optionC" data-answer="C"></button>
+                <button class="option-button" id="optionD" data-answer="D"></button>
+            </div>
+
+            <button class="submit-button" id="submitButton" disabled>إرسال الإجابة</button>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="resultScreen" class="result-screen">
+            <div class="result-icon" id="resultIcon">✅</div>
+            <div class="result-message" id="resultMessage">إجابة صحيحة!</div>
+            <div class="points-earned">
+                +<span id="pointsEarned">0</span> نقطة
+            </div>
+            <div class="total-score">
+                مجموع النقاط: <strong id="totalScore">0</strong>
+            </div>
+            <div class="rank" id="currentRank">المركز: 1</div>
+        </div>
+
+        <!-- Winners Screen -->
+        <div id="winnersScreen" class="winners-screen">
+            <div class="final-result">
+                <h2>🎉 انتهت اللعبة! 🎉</h2>
+                <div class="final-score" id="finalScore">0</div>
+                <div class="final-rank" id="finalRank">المركز النهائي: -</div>
+            </div>
+
+            <div class="podium-mini">
+                <h3>🏆 الفائزون</h3>
+                <div id="winnersList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/player.js"></script>
+</body>
+</html>

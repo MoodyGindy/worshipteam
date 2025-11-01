@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عرض المضيف - لعبة الأسئلة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 900;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .lobby-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            flex: 1;
+            padding: 20px 0;
+            min-height: 0;
+        }
+
+        .qr-code {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            flex-shrink: 0;
+        }
+
+        .qr-code img {
+            display: block;
+            width: 250px;
+            height: 250px;
+        }
+
+        .join-info {
+            text-align: center;
+            flex-shrink: 0;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .game-code {
+            font-size: 3rem;
+            font-weight: 900;
+            background: white;
+            color: #667eea;
+            padding: 15px 40px;
+            border-radius: 20px;
+            margin: 15px 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .join-url {
+            font-size: 1.5rem;
+            margin-top: 10px;
+            word-break: break-all;
+            padding: 0 10px;
+        }
+
+        .players-count {
+            font-size: 2rem;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+        }
+
+        .start-button {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.8rem;
+            padding: 18px 50px;
+            background: #48bb78;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            margin-top: 25px;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            width: auto;
+            display: inline-block;
+        }
+
+        .start-button:hover {
+            background: #38a169;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 25px rgba(0,0,0,0.4);
+        }
+
+        .question-screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 1.8rem;
+        }
+
+        .timer {
+            font-size: 3rem;
+            font-weight: 900;
+            background: rgba(255,255,255,0.2);
+            padding: 10px 30px;
+            border-radius: 15px;
+        }
+
+        .timer.warning {
+            background: #fc8181;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .question-box {
+            background: rgba(255,255,255,0.15);
+            padding: 40px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .question-text {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+        .category-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.3);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            background: rgba(255,255,255,0.2);
+            padding: 30px;
+            border-radius: 15px;
+            font-size: 1.8rem;
+            font-weight: 700;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 120px;
+        }
+
+        .option.correct {
+            background: #48bb78;
+            transform: scale(1.05);
+        }
+
+        .option.wrong {
+            background: #fc8181;
+            opacity: 0.5;
+        }
+
+        .leaderboard {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .leaderboard-title {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .leaderboard-item:nth-child(2) {
+            background: gold;
+            color: #333;
+        }
+
+        .leaderboard-item:nth-child(3) {
+            background: silver;
+            color: #333;
+        }
+
+        .leaderboard-item:nth-child(4) {
+            background: #cd7f32;
+            color: white;
+        }
+
+        .winners-screen {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .winners-title {
+            font-size: 4rem;
+            font-weight: 900;
+            margin-bottom: 50px;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .podium {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .podium-place {
+            text-align: center;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .podium-place.second {
+            animation-delay: 0.2s;
+        }
+
+        .podium-place.first {
+            animation-delay: 0.4s;
+        }
+
+        .podium-place.third {
+            animation-delay: 0s;
+        }
+
+        .podium-box {
+            background: rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 30px;
+            width: 250px;
+        }
+
+        .podium-place.first .podium-box {
+            background: gold;
+            color: #333;
+            height: 350px;
+        }
+
+        .podium-place.second .podium-box {
+            background: silver;
+            color: #333;
+            height: 280px;
+        }
+
+        .podium-place.third .podium-box {
+            background: #cd7f32;
+            height: 220px;
+        }
+
+        .medal {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .winner-name {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 10px;
+        }
+
+        .winner-score {
+            font-size: 3rem;
+            font-weight: 700;
+        }
+
+        .show-answer-button {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.8rem;
+            padding: 15px 50px;
+            background: #ed8936;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin: 0 10px;
+        }
+
+        .show-answer-button:hover {
+            background: #dd6b20;
+            transform: translateY(-2px);
+        }
+
+        .show-answer-button.hidden {
+            display: none;
+        }
+
+        .next-question-button {
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.8rem;
+            padding: 15px 50px;
+            background: #4299e1;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            margin: 0 10px;
+        }
+
+        .next-question-button:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .show-flex {
+            display: flex !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 لعبة الأسئلة 🎵</h1>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobbyScreen" class="lobby-screen">
+            <div class="qr-code" id="qrCode">
+                <!-- QR code will be inserted here -->
+            </div>
+            <div class="join-info">
+                <h2>امسح الرمز للانضمام</h2>
+                <div class="game-code" id="gameCode">------</div>
+                <div class="join-url" id="joinUrl"></div>
+                <div class="players-count">
+                    <span id="playersCount">0</span> لاعب
+                </div>
+                <button class="start-button" id="startButton">ابدأ اللعبة</button>
+            </div>
+        </div>
+
+        <!-- Question Screen -->
+        <div id="questionScreen" class="question-screen">
+            <div class="question-header">
+                <div>
+                    <span>السؤال <span id="currentQuestion">1</span> من <span id="totalQuestions">20</span></span>
+                </div>
+                <div class="timer" id="timer">30</div>
+            </div>
+
+            <div class="question-box">
+                <div class="category-badge" id="category">موسيقى</div>
+                <div class="question-text" id="questionText"></div>
+            </div>
+
+            <div class="options-grid" id="optionsGrid">
+                <div class="option" id="optionA"></div>
+                <div class="option" id="optionB"></div>
+                <div class="option" id="optionC"></div>
+                <div class="option" id="optionD"></div>
+            </div>
+
+            <div class="leaderboard">
+                <div class="leaderboard-title">🏆 المتصدرون</div>
+                <div id="leaderboardList"></div>
+            </div>
+
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="show-answer-button" id="showAnswerButton">إظهار الإجابة</button>
+                <button class="next-question-button hidden" id="nextQuestionButton">السؤال التالي</button>
+                <button class="next-question-button hidden" id="showWinnersButton">عرض الفائزين</button>
+            </div>
+        </div>
+
+        <!-- Winners Screen -->
+        <div id="winnersScreen" class="winners-screen">
+            <div class="winners-title">🎉 الفائزون 🎉</div>
+            <div class="podium">
+                <div class="podium-place second" id="secondPlace">
+                    <div class="podium-box">
+                        <div class="medal">🥈</div>
+                        <div class="winner-name" id="secondName">---</div>
+                        <div class="winner-score" id="secondScore">0</div>
+                    </div>
+                </div>
+                <div class="podium-place first" id="firstPlace">
+                    <div class="podium-box">
+                        <div class="medal">🥇</div>
+                        <div class="winner-name" id="firstName">---</div>
+                        <div class="winner-score" id="firstScore">0</div>
+                    </div>
+                </div>
+                <div class="podium-place third" id="thirdPlace">
+                    <div class="podium-box">
+                        <div class="medal">🥉</div>
+                        <div class="winner-name" id="thirdName">---</div>
+                        <div class="winner-score" id="thirdScore">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="js/host.js"></script>
+</body>
+</html>
