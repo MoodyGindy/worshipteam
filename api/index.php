@@ -1,17 +1,22 @@
 <?php
 
-// Start session before any output
-session_start();
+// Set session cookie parameters BEFORE starting session
+// Use session_set_cookie_params() instead of ini_set() to avoid warnings
+session_set_cookie_params([
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
+
+// Start session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 header('Access-Control-Allow-Credentials: true');
-
-// Set session cookie parameters for better security
-ini_set('session.cookie_httponly', 1);
-ini_set('session.use_only_cookies', 1);
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
