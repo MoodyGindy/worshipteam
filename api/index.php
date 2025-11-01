@@ -257,67 +257,107 @@ function joinGame($db) {
 }
 
 function submitAnswer($db) {
-    $input = json_decode(file_get_contents('php://input'), true);
-    $playerId = $input['playerId'] ?? null;
-    $questionId = $input['questionId'] ?? null;
-    $answer = $input['answer'] ?? null;
-    $responseTime = $input['responseTime'] ?? 0;
+    try {
+        $input = json_decode(file_get_contents('php://input'), true);
+        
+        if (!$input) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Invalid JSON input']);
+            return;
+        }
+        
+        $playerId = $input['playerId'] ?? null;
+        $questionId = $input['questionId'] ?? null;
+        $answer = $input['answer'] ?? null;
+        $responseTime = $input['responseTime'] ?? 0;
 
-    if (!$playerId || !$questionId || !$answer) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Missing required fields']);
-        return;
+        // Validate inputs
+        if (!$playerId || !$questionId || !$answer) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Missing required fields',
+                'debug' => [
+                    'playerId' => $playerId,
+                    'questionId' => $questionId,
+                    'answer' => $answer
+                ]
+            ]);
+            return;
+        }
+
+        // Validate player exists
+        $player = $db->fetchOne("SELECT id FROM players WHERE id = ?", [$playerId]);
+        if (!$player) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Player not found']);
+            return;
+        }
+
+        // Get correct answer
+        $question = $db->fetchOne(
+            "SELECT correct_answer, points FROM questions WHERE id = ?",
+            [$questionId]
+        );
+
+        if (!$question) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Question not found']);
+            return;
+        }
+
+        // Normalize answer comparison
+        $submittedAnswer = strtoupper(trim($answer));
+        $correctAnswer = strtoupper(trim($question['correct_answer']));
+        $isCorrect = ($submittedAnswer === $correctAnswer);
+
+        // Explicitly cast boolean to integer (0 or 1) for database insertion
+        // This prevents MySQL from receiving an empty string when $isCorrect is false
+        $isCorrectInt = $isCorrect ? 1 : 0;
+
+        // Calculate points
+        $pointsEarned = 0;
+        if ($isCorrect) {
+            $timeBonus = max(0, 1 - ($responseTime / 30));
+            $pointsEarned = round($question['points'] * (0.5 + 0.5 * $timeBonus));
+        }
+
+        // Save answer
+        $sql = "INSERT INTO answers (player_id, question_id, selected_answer, is_correct, points_earned, response_time)
+                VALUES (?, ?, ?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                selected_answer = VALUES(selected_answer),
+                is_correct = VALUES(is_correct),
+                points_earned = VALUES(points_earned),
+                response_time = VALUES(response_time)";
+
+        // Use integer value for database insertion
+        $db->query($sql, [$playerId, $questionId, $answer, $isCorrectInt, $pointsEarned, $responseTime]);
+
+        // Update total score
+        $db->query(
+            "UPDATE players SET total_score = (
+                SELECT COALESCE(SUM(points_earned), 0) FROM answers WHERE player_id = ?
+            ) WHERE id = ?",
+            [$playerId, $playerId]
+        );
+
+        echo json_encode([
+            'success' => true,
+            'isCorrect' => $isCorrect,
+            'pointsEarned' => $pointsEarned,
+            'correctAnswer' => $question['correct_answer']
+        ]);
+        
+    } catch (Exception $e) {
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Server error: ' . $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
     }
-
-    // Get correct answer
-    $question = $db->fetchOne(
-        "SELECT correct_answer, points FROM questions WHERE id = ?",
-        [$questionId]
-    );
-
-    if (!$question) {
-        http_response_code(404);
-        echo json_encode(['error' => 'Question not found']);
-        return;
-    }
-
-    // Normalize answer comparison
-    $submittedAnswer = strtoupper(trim($answer));
-    $correctAnswer = strtoupper(trim($question['correct_answer']));
-    $isCorrect = ($submittedAnswer === $correctAnswer);
-
-    // Calculate points
-    $pointsEarned = 0;
-    if ($isCorrect) {
-        $timeBonus = max(0, 1 - ($responseTime / 30));
-        $pointsEarned = round($question['points'] * (0.5 + 0.5 * $timeBonus));
-    }
-
-    // Save answer
-    $sql = "INSERT INTO answers (player_id, question_id, selected_answer, is_correct, points_earned, response_time)
-            VALUES (?, ?, ?, ?, ?, ?)
-            ON DUPLICATE KEY UPDATE
-            selected_answer = VALUES(selected_answer),
-            is_correct = VALUES(is_correct),
-            points_earned = VALUES(points_earned),
-            response_time = VALUES(response_time)";
-
-    $db->query($sql, [$playerId, $questionId, $answer, $isCorrect, $pointsEarned, $responseTime]);
-
-    // Update total score
-    $db->query(
-        "UPDATE players SET total_score = (
-            SELECT COALESCE(SUM(points_earned), 0) FROM answers WHERE player_id = ?
-        ) WHERE id = ?",
-        [$playerId, $playerId]
-    );
-
-    echo json_encode([
-        'success' => true,
-        'isCorrect' => $isCorrect,
-        'pointsEarned' => $pointsEarned,
-        'correctAnswer' => $question['correct_answer']
-    ]);
 }
 
 function getCurrentQuestion($db) {

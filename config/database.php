@@ -2,8 +2,8 @@
 
 // Database Configuration
 return [
-    'host' => 'localhost',
-    'port' => 8889, // MAMP default MySQL port
+    // 'host' => 'localhost',
+    // 'port' => 8889, // MAMP default MySQL port
     'database' => 'u986938982_worldwar3_game',
     'username' => 'u986938982_worldwar3_game',
     'password' => 'Warldwar3_game@1234', // Default MAMP password

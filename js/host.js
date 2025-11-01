@@ -1,4 +1,4 @@
-const API_URL = 'https://kdsc.fun/worshipteam/worshipteam/api';
+const API_URL = 'http://localhost:8888/worshipTeam/api';
 
 let gameCode = null;
 let questions = [];

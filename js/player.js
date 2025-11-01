@@ -1,4 +1,4 @@
-const API_URL = 'https://kdsc.fun/worshipteam/worshipteam/api';
+const API_URL = 'http://localhost:8888/worshipTeam/api';
 
 let gameCode = null;
 let playerId = null;
@@ -225,11 +225,25 @@ function selectOption(event) {
 }
 
 async function submitAnswer() {
-    if (!selectedAnswer || !currentQuestionId || hasAnsweredCurrentQuestion) {
+    // Validate all required data
+    if (!playerId) {
+        console.error('❌ Cannot submit: playerId is null');
+        alert('خطأ: لم يتم تحديد لاعب. يرجى الانضمام إلى اللعبة أولاً.');
+        return;
+    }
+
+    if (!currentQuestionId) {
+        console.error('❌ Cannot submit: currentQuestionId is null');
+        alert('خطأ: لا يوجد سؤال حالياً. يرجى الانتظار.');
+        return;
+    }
+
+    if (!selectedAnswer || hasAnsweredCurrentQuestion) {
         console.error('Cannot submit:', {
             selectedAnswer: selectedAnswer,
             currentQuestionId: currentQuestionId,
-            hasAnswered: hasAnsweredCurrentQuestion
+            hasAnswered: hasAnsweredCurrentQuestion,
+            playerId: playerId
         });
         return;
     }
@@ -238,9 +252,11 @@ async function submitAnswer() {
 
     console.log('═══════════════════════════════════════');
     console.log('📤 SUBMITTING ANSWER');
+    console.log('Player ID:', playerId);
     console.log('Question ID:', currentQuestionId);
     console.log('Selected Answer:', selectedAnswer);
     console.log('Response Time:', responseTime, 'seconds');
+    console.log('Request URL:', `${API_URL}/submit-answer`);
     console.log('═══════════════════════════════════════');
 
     // Mark as answered immediately to prevent double submission
@@ -270,7 +286,15 @@ async function submitAnswer() {
             })
         });
 
+        // Check if response is OK (status 200-299)
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error('API Error:', response.status, errorData);
+            throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+        }
+
         const data = await response.json();
+        console.log('Answer submission response:', data);
 
         if (data.success) {
             // Show answer result immediately
@@ -284,8 +308,8 @@ async function submitAnswer() {
             totalScore += data.pointsEarned;
             console.log(`✓ Total score: ${totalScore} points`);
         } else {
-            console.error('Failed to submit answer:', data.error);
-            alert('فشل إرسال الإجابة');
+            console.error('Failed to submit answer:', data.error || 'Unknown error');
+            alert('فشل إرسال الإجابة: ' + (data.error || 'خطأ غير معروف'));
             // Re-enable buttons on error
             hasAnsweredCurrentQuestion = false;
             document.querySelectorAll('.option-button').forEach(btn => {
@@ -295,7 +319,8 @@ async function submitAnswer() {
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
-        alert('حدث خطأ في إرسال الإجابة');
+        console.error('PlayerId:', playerId, 'QuestionId:', currentQuestionId, 'Answer:', selectedAnswer);
+        alert('حدث خطأ في إرسال الإجابة: ' + error.message);
         // Re-enable buttons on error
         hasAnsweredCurrentQuestion = false;
         document.querySelectorAll('.option-button').forEach(btn => {
