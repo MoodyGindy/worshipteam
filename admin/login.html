@@ -153,7 +153,28 @@
     </div>
 
     <script>
-        const API_URL = 'https://kdsc.fun/worshipTeam/api';
+        // Auto-detect API URL from current page location
+        function getApiUrl() {
+            const currentPath = window.location.pathname;
+            // Try to detect if we're in /worshipTeam/ or /worshipteam/ or root
+            const baseMatch = currentPath.match(/^\/([^\/]+)/);
+            const base = baseMatch ? baseMatch[1] : 'worshipTeam';
+            
+            // Try different possible paths
+            const possibleUrls = [
+                `https://${window.location.host}/${base}/api`,
+                `https://${window.location.host}/worshipTeam/api`,
+                `https://${window.location.host}/worshipteam/api`,
+                `https://kdsc.fun/worshipTeam/api`,
+                `https://kdsc.fun/worshipteam/api`
+            ];
+            
+            // Return first one (will try others if this fails)
+            return possibleUrls[0];
+        }
+        
+        const API_URL = getApiUrl();
+        console.log('API URL:', API_URL);
 
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -178,19 +199,55 @@
             errorMessage.classList.remove('show');
 
             try {
-                // Try the new endpoint first, fallback to old one
-                const endpoint = `${API_URL}/admin-login.php`;
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include', // Important for sessions
-                    body: JSON.stringify({
-                        username: username,
-                        password: password
-                    })
-                });
+                // Try multiple endpoints in case path differs
+                const endpoints = [
+                    `${API_URL}/admin-login.php`,
+                    `https://${window.location.host}/worshipTeam/api/admin-login.php`,
+                    `https://${window.location.host}/worshipteam/api/admin-login.php`,
+                    `${API_URL}/admin-login`,
+                    `https://${window.location.host}/worshipTeam/api/admin-login`,
+                    `https://${window.location.host}/worshipteam/api/admin-login`
+                ];
+                
+                let response;
+                let lastError;
+                
+                // Try each endpoint until one works
+                for (const endpoint of endpoints) {
+                    try {
+                        console.log('Trying endpoint:', endpoint);
+                        response = await fetch(endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({
+                                username: username,
+                                password: password
+                            })
+                        });
+
+                        // If we got a response (even 404), check if it's not an error
+                        if (response.status === 404) {
+                            // Try next endpoint
+                            continue;
+                        }
+                        
+                        // If we got a non-404 response, use it
+                        break;
+                    } catch (err) {
+                        console.warn('Endpoint failed:', endpoint, err);
+                        lastError = err;
+                        // Try next endpoint
+                        continue;
+                    }
+                }
+                
+                // If no endpoint worked, throw error
+                if (!response) {
+                    throw new Error('لا يمكن الوصول إلى الخادم. يرجى التحقق من المسار.');
+                }
 
                 // Check if response is OK
                 if (!response.ok) {
