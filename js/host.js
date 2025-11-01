@@ -1,5 +1,5 @@
 const API_URL = 'https://kdsc.fun/worshipteam/worshipteam/api';
-const WS_URL = 'ws://localhost:8080';
+const WS_URL = 'wss://kdsc.fun:8080'; // Use WSS (secure WebSocket) for HTTPS sites
 
 let ws = null;
 let gameCode = null;
