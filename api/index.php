@@ -30,10 +30,22 @@ use QuizGame\Database;
 $db = Database::getInstance();
 $method = $_SERVER['REQUEST_METHOD'];
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$pathParts = explode('/', trim($path, '/'));
 
-// Get the action from URL
-$action = $pathParts[count($pathParts) - 1] ?? '';
+// Remove base path if present (e.g., /worshipTeam/api/admin-login -> admin-login)
+// Find the position of 'api' in the path
+$pathParts = explode('/', trim($path, '/'));
+$apiIndex = array_search('api', $pathParts);
+
+if ($apiIndex !== false && $apiIndex < count($pathParts) - 1) {
+    // Get everything after 'api'
+    $action = $pathParts[$apiIndex + 1] ?? '';
+} else {
+    // Fallback: get the last part
+    $action = $pathParts[count($pathParts) - 1] ?? '';
+}
+
+// Clean up action (remove query string if present)
+$action = explode('?', $action)[0];
 
 try {
     switch ($action) {
@@ -152,8 +164,18 @@ try {
             break;
 
         default:
+            // Debug info for 404 errors
             http_response_code(404);
-            echo json_encode(['error' => 'Endpoint not found']);
+            echo json_encode([
+                'error' => 'Endpoint not found',
+                'debug' => [
+                    'action' => $action,
+                    'method' => $method,
+                    'path' => $path,
+                    'pathParts' => $pathParts,
+                    'request_uri' => $_SERVER['REQUEST_URI'] ?? 'not set'
+                ]
+            ]);
     }
 } catch (Exception $e) {
     http_response_code(500);

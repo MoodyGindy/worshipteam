@@ -178,7 +178,9 @@
             errorMessage.classList.remove('show');
 
             try {
-                const response = await fetch(`${API_URL}/admin-login`, {
+                // Try the new endpoint first, fallback to old one
+                const endpoint = `${API_URL}/admin-login.php`;
+                const response = await fetch(endpoint, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
