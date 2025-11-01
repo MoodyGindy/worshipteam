@@ -147,6 +147,8 @@
 
         <div style="text-align: center; margin-top: 20px;">
             <a href="forgot-password.html" style="color: #667eea; text-decoration: none; font-size: 0.9rem;">نسيت كلمة المرور؟</a>
+            <br>
+            <a href="test_admin_setup.php" style="color: #999; text-decoration: none; font-size: 0.8rem; margin-top: 10px; display: inline-block;">🔍 اختبار الإعداد</a>
         </div>
     </div>
 
@@ -181,13 +183,27 @@
                     headers: {
                         'Content-Type': 'application/json'
                     },
+                    credentials: 'include', // Important for sessions
                     body: JSON.stringify({
                         username: username,
                         password: password
                     })
                 });
 
+                // Check if response is OK
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    let errorData;
+                    try {
+                        errorData = JSON.parse(errorText);
+                    } catch (e) {
+                        errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+                    }
+                    throw new Error(errorData.error || 'خطأ في الاتصال بالخادم');
+                }
+
                 const data = await response.json();
+                console.log('Login response:', data);
 
                 if (data.success) {
                     // Store session token
@@ -203,7 +219,14 @@
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.');
+                console.error('Error details:', {
+                    message: error.message,
+                    stack: error.stack
+                });
+                
+                // Show more detailed error message
+                const errorMsg = error.message || 'حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.';
+                showError(errorMsg);
                 form.classList.remove('loading');
                 loginButton.textContent = 'دخول';
             }
