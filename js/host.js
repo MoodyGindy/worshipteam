@@ -47,6 +47,14 @@ async function init() {
         document.getElementById('nextQuestionButton').addEventListener('click', nextQuestion);
         document.getElementById('showWinnersButton').addEventListener('click', showWinners);
 
+        // Move action buttons before leaderboard
+        const questionScreen = document.getElementById('questionScreen');
+        const leaderboardContainer = document.querySelector('.leaderboard');
+        const showAnswerButton = document.getElementById('showAnswerButton');
+        if (questionScreen && leaderboardContainer && showAnswerButton && showAnswerButton.parentElement) {
+            questionScreen.insertBefore(showAnswerButton.parentElement, leaderboardContainer);
+        }
+
     } catch (error) {
         console.error('Initialization error:', error);
         alert('حدث خطأ في تهيئة اللعبة');
@@ -284,7 +292,7 @@ async function updateLeaderboard() {
         const leaderboardList = document.getElementById('leaderboardList');
         leaderboardList.innerHTML = '';
 
-        data.leaderboard.slice(0, 10).forEach((player, index) => {
+        data.leaderboard.slice(0, 5).forEach((player, index) => {
             const item = document.createElement('div');
             item.className = 'leaderboard-item';
             item.innerHTML = `
